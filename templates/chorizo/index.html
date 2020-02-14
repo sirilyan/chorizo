@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <title>Chorizo: Turn tasks into games</title>
+
+    <!-- Bootstrap -->
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/bootstrap/css/chorizo.css" rel="stylesheet">
+    
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+
+  <nav class="navbar navbar-inverse navbar-fixed-top">
+     <div class="container">
+        <div class="navbar-header">
+            <span class="navbar-brand">Chorizo</span>
+        </div>
+        <div id="navbar" class="collapse navbar-collapse">
+            <ul class="nav navbar-nav">
+            </ul>
+
+			{% if user and user.is_authenticated %}
+			<ul class="nav navbar-nav navbar-right">
+				<li><a href="{% url 'logout' %}">Hi, {{ user.username }}! Log out</a>
+			</ul>
+			{% else %}
+			<form class="navbar-form navbar-right" action="{% url 'login' %}" method="post">
+			{% csrf_token %}
+            <div class="form-group">
+              <input name="username" type="text" placeholder="Username" class="form-control">
+            </div>
+            <div class="form-group">
+              <input name="password" type="password" placeholder="Password" class="form-control">
+            </div>
+            <button type="submit" class="btn btn-success">Sign in</button>
+           </form>
+           {% endif %}
+
+        </div>
+     </div>
+  </nav>
+
+  <div class="jumbotron">
+  	<div class="container">
+  	<h1>This is Chorizo</h1>
+  	</div>
+  </div>
+  
+  <div class="container chorizo-window" role="main">
+
+{% if user.is_authenticated and messages %}
+<div class="container alert alert-danger">
+{% for message in messages %}
+    <p class="{{ message.tags }}">{{ message }}</p>
+{% endfor %}
+</div>
+{% endif %}
+
+	<div class="container">
+		<div class="row">
+		<div class="col-sm-1"></div>
+		<div class="col-sm-10">
+		<h3>Welcome to <b>Chorizo</b>.</h3>
+		
+
+		{% if user and user.is_authenticated %}
+		
+		{% if chores %}
+		<p>You've assigned yourself {% with cc=chores.count %}
+		{{ cc }} chore{{ cc|pluralize }}{% endwith %}. There's a button
+		that says <b>Done!</b> next to each chore that hasn't been
+		completed. Tap it to finish the job.</p>
+		
+		<p>Behind the scenes, completing your chore also gives you
+		100 reward points. Those will come into play once the reward
+		system goes online.</p>
+		{% else %}
+		<p>Now that you're logged in, you can assign yourself chores.
+		Just type the name of a chore below and click the add button.
+		It'll automatically be assigned to you and given a due date of
+		three days from today.</p>
+		{% endif %}
+		
+		{% else %}
+		
+		<p>This is a portfolio demonstration site.
+		It is powered by the <a href="http://www.djangoproject.com/">Django</a>
+		framework and made responsive, mobile-ready, and attractive by
+		<a href="http://www.getbootstrap.com/">Bootstrap</a>.</p>
+		
+		<p>I'm constantly iterating and improving this site. If it looks
+		like something you could use <b>today</b>, it'll be even better
+		tomorrow.</p>
+		
+		{% endif %}
+		</div>
+		</div>
+	</div>
+
+{% if user and user.is_authenticated %}
+
+	<table class="table table-hover table-striped">
+	<thead>
+		<tr>
+			<th>Chore description</th>
+			<th></th>
+			<th></th>
+			<th></th>
+		</tr>
+	</thead>
+	<tbody>
+	{% if chores %}
+	{% for c in chores %}
+	   <tr class="{% if c.completed %} success {% endif %} {% if c.overdue %} danger {% endif %}">
+		   <td>{{ c.description }}</td>
+		   <td>
+		   {% if c.overdue %}
+		   {{ c.due_date|timesince }} overdue
+		   {% else %}
+		   {% if not c.completed %}
+		   Due in {{ c.due_date|timeuntil }}
+		   {% endif %}
+		   {% endif %}
+		   </td>
+		   {% if c.completed %}
+		   <td>Finished {{ c.completed.completion_date|timesince }} ago</td>
+		   {% else %}
+		   <td>
+			   <form action="{% url 'complete' c.id %}" method="post">
+			   	   {% csrf_token %}
+			   	   <button class="btn btn-sm btn-success">Done!</button>
+			   </form>
+		   </td>
+		   {% endif %}
+		   <td><a href="{% url 'details' c.id %}">More information</a></td>
+	   </tr>
+	{% endfor %}
+	{% else %}
+	<tr>
+		<td colspan="4">You have no chores. Why not add one?</td>
+	</tr>
+	{% endif %}
+	</tbody>
+	<tfoot>
+		<tr>
+			<td colspan="4">
+<div class="container">
+    <form action="{% url 'give_chore' %}" method="post">
+        {% csrf_token %}
+        <div class="form-group">
+        <input size="40" name="chore_description" placeholder="Give yourself a new chore...">
+        <button type="submit" class="btn-danger">Put me to work!</button>
+        </div>
+    </form>
+</div>
+			
+			</td>
+		</tr>
+	</tfoot>
+	</table>
+	
+{% endif %}
+
+
+<div class="container">
+	<div class="row">
+		<div class="col-md-4 pagebox">
+			<div class="content home">
+			<h4 class="text-center"><span>At home
+		<small>Chore tracking made easy</small></span></h4>
+		</div>
+
+		<p>Chorizo is pronounced "chore-ease-oh", and that's
+		what it was originally built for. Create a family
+		group and assign chores to your family members.
+		Whenever that bed gets made or that dish gets washed,
+		it's an opportunity to earn a prize!</p>
+		</div>
+
+		<div class="col-md-4 pagebox">
+		<div class="content office">
+			<h4 class="text-center">In the office
+		<small>Work hard, earn stuff</small></h4>
+		</div>
+
+		<p>Add Chorizo to your benefits program and let your
+		employees pick their own rewards, anytime they want.
+		All you need to do is be an awesome workplace with
+		top-notch talent. We'll handle the rest.</p>
+		</div>
+
+		<div class="col-md-4 pagebox">
+		<div class="content storefront">
+			<h4 class="text-center">For your store
+		<small>Loyalty programs</small></h4>
+		</div>
+
+		<p>Chorizo will soon support a powerful developer API
+		that will let you develop a loyalty program for your
+		online or brick-and-mortar store. Track customer
+			purchases and offer customized rewards.</p>
+		</div>
+    </div>
+
+{% if not user.is_authenticated %}
+	<div class="row">
+    <div class="col-md-12">
+		<button type="button" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#createAccount">
+			Create an account (it's free!)
+		</button>
+    </div>
+    </div>
+{% endif %}
+
+</div>
+
+{% if not user.is_authenticated %}
+
+<div class="modal fade" id="createAccount" role="dialog">
+<div class="modal-dialog" role="document">
+<div class="modal-content">
+	<div class="modal-header">
+		<button class="close" data-dismiss="modal"><span>&times;</span></button>
+		<h4 class="modal-title" id="createModalLabel">Create a new account</h4>
+	</div>
+	<div class="modal-body">
+		<form class="form-horizontal" action="{% url 'register' %}" method="post">
+		{% csrf_token %}
+		<div class="form-group">
+		<label class="control-label" for="username">Username:</label> <input name="username">
+		</div>
+
+		<div class="form-group">
+		<label class="control-label" for="password">Password:</label> <input name="password" type="password">
+		</div>
+
+	    <div class="form-group">
+		<label for="repeat_password">Enter password again:</label> <input name="repeat_password" type="password">
+		</div>
+
+		<button class="btn btn-primary" type="submit" >Register</button>
+
+		</form>
+
+	</div>
+
+	<div class="modal-footer">
+	</div>
+</div>
+</div>
+</div>
+
+{% endif %}
+
+</div>
+
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  </body>
+</html>
